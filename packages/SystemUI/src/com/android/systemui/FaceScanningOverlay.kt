@@ -44,6 +44,8 @@ import com.android.systemui.util.asIndenting
 import java.io.PrintWriter
 import java.util.concurrent.Executor
 
+import com.android.systemui.statusbar.phone.FaceUnlockImageView
+
 /**
  * When the face is enrolled, we use this view to show the face scanning animation and the camera
  * protection on the keyguard.
@@ -132,6 +134,7 @@ class FaceScanningOverlay(
         // Delay the relayout until the end of the animation when hiding,
         // otherwise we'd clip it.
         if (showScanningAnim) {
+            FaceUnlockImageView.setBouncerState(FaceUnlockImageView.State.SCANNING)
             visibility = View.VISIBLE
             requestLayout()
         }
@@ -140,6 +143,9 @@ class FaceScanningOverlay(
         rimAnimator =
             faceScanningRimAnimator(faceAuthSucceeded, cameraProtectionAnimator(faceAuthSucceeded))
         rimAnimator?.start()
+        if (faceAuthSucceeded) {
+            FaceUnlockImageView.setBouncerState(FaceUnlockImageView.State.SUCCESS)
+        }
     }
 
     private fun faceScanningRimAnimator(
