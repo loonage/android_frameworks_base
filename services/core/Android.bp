@@ -256,6 +256,8 @@ java_library_static {
         "net_flags_lib",
         "stats_flags_lib",
         "core_os_flags_lib",
+        "vendor.xiaomi.hardware.fingerprintextension-V1-java",
+        "vendor.xiaomi.hw.touchfeature-V1-java",
     ],
     javac_shard_size: 50,
     javacflags: [
