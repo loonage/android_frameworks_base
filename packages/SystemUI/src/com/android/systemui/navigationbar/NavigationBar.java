@@ -282,7 +282,6 @@ public class NavigationBar extends ViewController<NavigationBarView> implements 
     private final Rect mSamplingBounds = new Rect();
     private final Binder mInsetsSourceOwner = new Binder();
     private final NavBarButtonClickLogger mNavBarButtonClickLogger;
-    private final NavbarOrientationTrackingLogger mNavbarOrientationTrackingLogger;
 
     /**
      * When quickswitching between apps of different orientations, we draw a secondary home handle
@@ -558,8 +557,7 @@ public class NavigationBar extends ViewController<NavigationBarView> implements 
             WakefulnessLifecycle wakefulnessLifecycle,
             TaskStackChangeListeners taskStackChangeListeners,
             DisplayTracker displayTracker,
-            NavBarButtonClickLogger navBarButtonClickLogger,
-            NavbarOrientationTrackingLogger navbarOrientationTrackingLogger) {
+            NavBarButtonClickLogger navBarButtonClickLogger) {
         super(navigationBarView);
         mFrame = navigationBarFrame;
         mContext = context;
@@ -602,7 +600,6 @@ public class NavigationBar extends ViewController<NavigationBarView> implements 
         mDisplayTracker = displayTracker;
         mEdgeBackGestureHandler = navBarHelper.getEdgeBackGestureHandler();
         mNavBarButtonClickLogger = navBarButtonClickLogger;
-        mNavbarOrientationTrackingLogger = navbarOrientationTrackingLogger;
 
         mNavColorSampleMargin = getResources()
                 .getDimensionPixelSize(R.dimen.navigation_handle_sample_horizontal_margin);
@@ -904,8 +901,6 @@ public class NavigationBar extends ViewController<NavigationBarView> implements 
                 | WindowManager.LayoutParams.PRIVATE_FLAG_LAYOUT_SIZE_EXTENDED_BY_CUTOUT;
         mWindowManager.addView(mOrientationHandle, mOrientationParams);
         mOrientationHandle.setVisibility(View.GONE);
-
-        logNavbarOrientation("initSecondaryHomeHandleForRotation");
         mOrientationParams.setFitInsetsTypes(0 /* types*/);
         mOrientationHandleGlobalLayoutListener =
                 () -> {
@@ -966,7 +961,6 @@ public class NavigationBar extends ViewController<NavigationBarView> implements 
         mWindowManager.updateViewLayout(mOrientationHandle, mOrientationParams);
         mView.setVisibility(View.GONE);
         mOrientationHandle.setVisibility(View.VISIBLE);
-        logNavbarOrientation("orientSecondaryHomeHandle");
     }
 
     private void resetSecondaryHandle() {
@@ -976,21 +970,7 @@ public class NavigationBar extends ViewController<NavigationBarView> implements 
             mOrientationHandle.setVisibility(View.GONE);
         }
         mView.setVisibility(View.VISIBLE);
-        logNavbarOrientation("resetSecondaryHandle");
         setOrientedHandleSamplingRegion(null);
-    }
-
-    /**
-     * Logging method for issues concerning Navbar/secondary handle visibility.
-     */
-    private void logNavbarOrientation(String methodName) {
-        boolean isViewVisible = (mView != null) && (mView.getVisibility() == View.VISIBLE);
-        boolean isSecondaryHandleVisible =
-                (mOrientationHandle != null) && (mOrientationHandle.getVisibility()
-                        == View.VISIBLE);
-        mNavbarOrientationTrackingLogger.logPrimaryAndSecondaryVisibility(methodName, isViewVisible,
-                mShowOrientedHandleForImmersiveMode, isSecondaryHandleVisible, mCurrentRotation,
-                mStartingQuickSwitchRotation);
     }
 
     private void parseCurrentSysuiState() {
