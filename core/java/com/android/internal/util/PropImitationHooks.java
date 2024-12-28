@@ -71,15 +71,6 @@ public class PropImitationHooks {
         "FINGERPRINT", "google/sailfish/sailfish:10/QP1A.191005.007.A3/5972272:user/release-keys"
     );
 
-    private static final Set<String> sPixelFeatures = Set.of(
-        "PIXEL_2017_PRELOAD",
-        "PIXEL_2018_PRELOAD",
-        "PIXEL_2019_MIDYEAR_PRELOAD",
-        "PIXEL_2019_PRELOAD",
-        "PIXEL_2020_EXPERIENCE",
-        "PIXEL_2020_MIDYEAR_EXPERIENCE"
-    );
-
     private static volatile String sProcessName;
     private static volatile boolean sIsGms, sIsFinsky, sIsPhotos;
 
@@ -228,14 +219,9 @@ public class PropImitationHooks {
     }
 
     public static boolean hasSystemFeature(String name, boolean has) {
-        if (sIsPhotos) {
-            if (has && sPixelFeatures.stream().anyMatch(name::contains)) {
-                dlog("Blocked system feature " + name + " for Google Photos");
-                has = false;
-            } else if (!has && name.equalsIgnoreCase(FEATURE_NEXUS_PRELOAD)) {
-                dlog("Enabled system feature " + name + " for Google Photos");
-                has = true;
-            }
+        if (sIsPhotos && !has && name.equalsIgnoreCase(FEATURE_NEXUS_PRELOAD)) {
+            dlog("Enabled system feature " + name + " for Google Photos");
+            has = true;
         }
         return has;
     }
