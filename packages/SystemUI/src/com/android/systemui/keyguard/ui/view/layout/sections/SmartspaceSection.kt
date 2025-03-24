@@ -166,7 +166,7 @@ constructor(
                 connect(
                     sharedR.id.bc_smartspace_view,
                     ConstraintSet.TOP,
-                    R.id.lockscreen_clock_view,
+                    customR.id.lockscreen_clock_view,
                     ConstraintSet.BOTTOM,
                 )
             }
