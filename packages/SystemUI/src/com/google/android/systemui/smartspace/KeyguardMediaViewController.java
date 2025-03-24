@@ -9,7 +9,7 @@ import android.os.UserHandle;
 import android.text.TextUtils;
 import android.view.View;
 
-import com.android.systemui.R;
+import com.android.systemui.customization.R;
 import com.android.systemui.broadcast.BroadcastDispatcher;
 import com.android.systemui.dagger.SysUISingleton;
 import com.android.systemui.plugins.BcSmartspaceDataPlugin;
@@ -126,7 +126,7 @@ public final class KeyguardMediaViewController {
         } else {
             charSequence = mediaMetadata.getText("android.media.metadata.TITLE");
             if (TextUtils.isEmpty(charSequence)) {
-                charSequence = context.getResources().getString(R.string.music_controls_no_title);
+                charSequence = context.getResources().getString(com.android.systemui.res.R.string.music_controls_no_title);
             }
         }
         CharSequence text =
