@@ -13349,6 +13349,13 @@ public final class Settings {
         public static final String CERTIFIED_PROPS_DATA = "certified_props_data";
 
         /**
+         * Master switch for keybox spoofing.
+         * @hide
+         */
+        @Readable
+        public static final String SPOOF_KEYBOX = "spoof_keybox";
+
+        /**
          * Master switch for build-property spoofing.
          * @hide
          */

@@ -10,7 +10,6 @@ import android.provider.Settings;
 import android.util.Log;
 import android.util.Xml;
 
-import com.android.internal.R;
 import org.xmlpull.v1.XmlPullParser;
 
 import java.io.StringReader;
@@ -35,6 +34,33 @@ public final class KeyProviderManager {
         return getProvider().hasKeybox();
     }
 
+    public static boolean isSpoofingEnabled() {
+        Context context = getApplicationContext();
+        if (context == null) {
+            return true;
+        }
+        return isSpoofEnabled(context);
+    }
+
+    private static boolean isSpoofEnabled(Context ctx) {
+        try {
+            return Settings.Secure.getInt(ctx.getContentResolver(),
+                    Settings.Secure.SPOOF_KEYBOX, 1) != 0;
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to read " + Settings.Secure.SPOOF_KEYBOX, e);
+            return true;
+        }
+    }
+
+    private static Context getApplicationContext() {
+        try {
+            return ActivityThread.currentApplication().getApplicationContext();
+        } catch (Exception e) {
+            Log.e(TAG, "Error getting application context", e);
+            return null;
+        }
+    }
+
     private static class DefaultKeyboxProvider implements IKeyboxProvider {
         private final Map<String, String> keyboxData = new HashMap<>();
 
@@ -45,12 +71,17 @@ public final class KeyProviderManager {
                 return;
             }
 
-            if (!loadFromXmlSetting(context)) {
-                loadFromConfigArray(context);
+            if (!isSpoofEnabled(context)) {
+                Log.i(TAG, "Keybox spoofing disabled, using real attestation");
+                return;
+            }
+
+            if (!parseXmlSetting(context)) {
+                keyboxData.clear();
             }
         }
 
-        private boolean loadFromXmlSetting(Context ctx) {
+        private boolean parseXmlSetting(Context ctx) {
             try {
                 String xml = Settings.Secure.getString(ctx.getContentResolver(), Settings.Secure.KEYBOX_DATA);
                 if (xml == null || xml.trim().isEmpty()) return false;
@@ -134,28 +165,6 @@ public final class KeyProviderManager {
             } catch (Exception e) {
                 Log.e(TAG, "XML keybox load failed", e);
                 return false;
-            }
-        }
-
-        private void loadFromConfigArray(Context ctx) {
-            for (String entry : ctx.getResources().getStringArray(R.array.config_certifiedKeybox)) {
-                String[] parts = entry.split(":", 2);
-                if (parts.length == 2) {
-                    keyboxData.put(parts[0], parts[1]);
-                }
-            }
-
-            if (!hasKeybox()) {
-                Log.w(TAG, "Incomplete keybox provided by overlays");
-            }
-        }
-
-        private static Context getApplicationContext() {
-            try {
-                return ActivityThread.currentApplication().getApplicationContext();
-            } catch (Exception e) {
-                Log.e(TAG, "Error getting application context", e);
-                return null;
             }
         }
 

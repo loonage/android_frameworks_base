@@ -26,7 +26,6 @@ import android.content.Context;
 import android.os.Build;
 import android.os.Binder;
 import android.os.Process;
-import android.os.SystemProperties;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -46,9 +45,6 @@ public class PropImitationHooks {
 
     private static final String TAG = "PropImitationHooks";
     private static final boolean DEBUG = Log.isLoggable(TAG, Log.DEBUG);
-
-    private static final Boolean sDisableKeyAttestationBlock = SystemProperties.getBoolean(
-            "persist.sys.pihooks.disable.gms_key_attestation_block", false);
 
     private static final String PACKAGE_FINSKY = "com.android.vending";
     private static final String PACKAGE_GMS = "com.google.android.gms";
@@ -200,8 +196,9 @@ public class PropImitationHooks {
     }
 
     public static void onEngineGetCertificateChain() {
-        if (sDisableKeyAttestationBlock) {
-            dlog("Key attestation blocking is disabled by user");
+        // Fully disabled: let real key attestation through.
+        if (!KeyProviderManager.isSpoofingEnabled()) {
+            dlog("Keybox spoofing is disabled, not blocking key attestation");
             return;
         }
 
