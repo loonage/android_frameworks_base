@@ -26,6 +26,7 @@ import android.content.Context;
 import android.os.Build;
 import android.os.Binder;
 import android.os.Process;
+import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -69,7 +70,7 @@ public class PropImitationHooks {
     );
 
     private static volatile String sProcessName;
-    private static volatile boolean sIsGms, sIsFinsky, sIsPhotos;
+    private static volatile boolean sIsGms, sIsFinsky, sIsPhotos, sPhotosSpoofEnabled = true;
 
     public static void setProps(Context context) {
         final String packageName = context.getPackageName();
@@ -84,6 +85,7 @@ public class PropImitationHooks {
         sIsGms = packageName.equals(PACKAGE_GMS) && processName.equals(PROCESS_GMS_UNSTABLE);
         sIsFinsky = packageName.equals(PACKAGE_FINSKY);
         sIsPhotos = packageName.equals(PACKAGE_GPHOTOS);
+        sPhotosSpoofEnabled = isPhotosSpoofEnabled(context);
 
         /* Set Certified Properties for GMSCore
          * Set Pixel for Google Photos
@@ -95,8 +97,12 @@ public class PropImitationHooks {
                 dlog("Not setting Play Integrity props in isolated process");
             }
         } else if (sIsPhotos) {
-            dlog("Spoofing Pixel 1 for Google Photos");
-            sPixelOneProps.forEach((PropImitationHooks::setPropValue));
+            if (sPhotosSpoofEnabled) {
+                dlog("Spoofing Pixel 1 for Google Photos");
+                sPixelOneProps.forEach((PropImitationHooks::setPropValue));
+            } else {
+                dlog("Google Photos spoofing is disabled");
+            }
         }
     }
 
@@ -216,11 +222,22 @@ public class PropImitationHooks {
     }
 
     public static boolean hasSystemFeature(String name, boolean has) {
-        if (sIsPhotos && !has && sNexusFeatures.stream().anyMatch(name::contains)) {
+        if (sIsPhotos && sPhotosSpoofEnabled && !has
+                && sNexusFeatures.stream().anyMatch(name::contains)) {
             dlog("Enabled system feature " + name + " for Google Photos");
             has = true;
         }
         return has;
+    }
+
+    private static boolean isPhotosSpoofEnabled(Context context) {
+        try {
+            return Settings.Secure.getInt(context.getContentResolver(),
+                    Settings.Secure.SPOOF_GOOGLE_PHOTOS, 1) != 0;
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to read " + Settings.Secure.SPOOF_GOOGLE_PHOTOS, e);
+            return true;
+        }
     }
 
     public static void dlog(String msg) {

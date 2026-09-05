@@ -13349,6 +13349,14 @@ public final class Settings {
         public static final String CERTIFIED_PROPS_DATA = "certified_props_data";
 
         /**
+         * Whether to spoof a Google Pixel device to Google Photos for unlimited
+         * original-quality backup.
+         * @hide
+         */
+        @Readable
+        public static final String SPOOF_GOOGLE_PHOTOS = "spoof_google_photos";
+
+        /**
          * Master switch for keybox spoofing.
          * @hide
          */

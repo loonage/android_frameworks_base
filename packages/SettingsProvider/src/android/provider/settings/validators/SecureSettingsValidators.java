@@ -523,6 +523,7 @@ public class SecureSettingsValidators {
                 new InclusiveIntegerRangeValidator(0, 1));
         VALIDATORS.put(Secure.KEYBOX_DATA, ANY_STRING_VALIDATOR);
         VALIDATORS.put(Secure.CERTIFIED_PROPS_DATA, ANY_STRING_VALIDATOR);
+        VALIDATORS.put(Secure.SPOOF_GOOGLE_PHOTOS, BOOLEAN_VALIDATOR);
         VALIDATORS.put(Secure.SPOOF_KEYBOX, BOOLEAN_VALIDATOR);
         VALIDATORS.put(Secure.SPOOF_PROPS, BOOLEAN_VALIDATOR);
     }
