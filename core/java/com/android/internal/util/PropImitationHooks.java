@@ -30,8 +30,8 @@ import android.os.SystemProperties;
 import android.text.TextUtils;
 import android.util.Log;
 
-import com.android.internal.R;
 import com.android.internal.util.extra.KeyProviderManager;
+import com.android.internal.util.extra.PropProviderManager;
 
 import java.lang.reflect.Field;
 import java.util.Arrays;
@@ -46,9 +46,6 @@ public class PropImitationHooks {
 
     private static final String TAG = "PropImitationHooks";
     private static final boolean DEBUG = Log.isLoggable(TAG, Log.DEBUG);
-
-    private static final Boolean sDisableGmsProps = SystemProperties.getBoolean(
-            "persist.sys.pihooks.disable.gms_props", false);
 
     private static final Boolean sDisableKeyAttestationBlock = SystemProperties.getBoolean(
             "persist.sys.pihooks.disable.gms_key_attestation_block", false);
@@ -75,8 +72,6 @@ public class PropImitationHooks {
         "FINGERPRINT", "google/sailfish/sailfish:10/QP1A.191005.007.A3/5972272:user/release-keys"
     );
 
-    private static volatile String[] sCertifiedProps;
-
     private static volatile String sProcessName;
     private static volatile boolean sIsGms, sIsFinsky, sIsPhotos;
 
@@ -89,14 +84,6 @@ public class PropImitationHooks {
             return;
         }
 
-        final Resources res = context.getResources();
-        if (res == null) {
-            Log.e(TAG, "Null resources");
-            return;
-        }
-
-        sCertifiedProps = res.getStringArray(R.array.config_certifiedBuildProperties);
-
         sProcessName = processName;
         sIsGms = packageName.equals(PACKAGE_GMS) && processName.equals(PROCESS_GMS_UNSTABLE);
         sIsFinsky = packageName.equals(PACKAGE_FINSKY);
@@ -106,7 +93,7 @@ public class PropImitationHooks {
          * Set Pixel for Google Photos
          */
         if (sIsGms || sIsFinsky) {
-            if (!android.os.Process.isIsolated()) {
+            if (!Process.isIsolated()) {
                 setPlayIntegrityProps(context);
             } else {
                 dlog("Not setting Play Integrity props in isolated process");
@@ -119,7 +106,7 @@ public class PropImitationHooks {
 
     private static void setPropValue(String key, String value) {
         try {
-            dlog("Setting prop " + key + " to " + value.toString());
+            dlog("Setting prop " + key + " to " + value);
             Class clazz = Build.class;
             if (key.startsWith("VERSION.")) {
                 clazz = Build.VERSION.class;
@@ -136,19 +123,16 @@ public class PropImitationHooks {
     }
 
     private static void setPlayIntegrityProps(Context context) {
-        if (sDisableGmsProps) {
-            dlog("GMS prop imitation is disabled by user");
-            return;
-        }
-
         // Guard: isolated processes cannot access content providers (Settings.*).
-        if (android.os.Process.isIsolated()) {
+        if (Process.isIsolated()) {
             dlog("Skipping setPlayIntegrityProps in isolated process");
             return;
         }
 
-        if (sCertifiedProps.length == 0) {
-            dlog("Certified props are not set");
+        final Map<String, String> certifiedProps =
+                PropProviderManager.getProvider(context).getProps();
+        if (certifiedProps.isEmpty()) {
+            dlog("Certified props are not set or spoofing is disabled");
             return;
         }
 
@@ -164,28 +148,18 @@ public class PropImitationHooks {
                 }
             }
         };
+
         if (!was) {
             dlog("Spoofing build for GMS / Finsky");
-            setCertifiedProps();
+            certifiedProps.forEach((PropImitationHooks::setPropValue));
         } else {
             dlog("Skip spoofing build for GMS / Finsky, because GmsAddAccountActivityOnTop");
         }
+
         try {
             ActivityTaskManager.getService().registerTaskStackListener(taskStackListener);
         } catch (Exception e) {
             Log.e(TAG, "Failed to register task stack listener!", e);
-        }
-    }
-
-    private static void setCertifiedProps() {
-        for (String entry : sCertifiedProps) {
-            // Each entry must be of the format FIELD:value
-            final String[] fieldAndProp = entry.split(":", 2);
-            if (fieldAndProp.length != 2) {
-                Log.e(TAG, "Invalid entry in certified props: " + entry);
-                continue;
-            }
-            setPropValue(fieldAndProp[0], fieldAndProp[1]);
         }
     }
 
@@ -202,7 +176,7 @@ public class PropImitationHooks {
     }
 
     public static boolean shouldBypassTaskPermission(Context context) {
-        if (sDisableGmsProps) {
+        if (!PropProviderManager.isSpoofingEnabled(context)) {
             return false;
         }
 

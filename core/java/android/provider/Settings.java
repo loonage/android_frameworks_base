@@ -13342,6 +13342,20 @@ public final class Settings {
         public static final String KEYBOX_DATA = "keybox_data";
 
         /**
+         * User selectable PIH props.
+         * @hide
+         */
+        @Readable
+        public static final String CERTIFIED_PROPS_DATA = "certified_props_data";
+
+        /**
+         * Master switch for build-property spoofing.
+         * @hide
+         */
+        @Readable
+        public static final String SPOOF_PROPS = "spoof_props";
+
+        /**
          * Keys we no longer back up under the current schema, but want to continue to
          * process when restoring historical backup datasets.
          *
